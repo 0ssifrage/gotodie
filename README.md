@@ -1,0 +1,4 @@
+# GoToDie
+
+A Go AI
+
