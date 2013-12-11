@@ -142,7 +142,6 @@ static int gtp_komi(char *s)
 }
 
 /* Common code for fixed_handicap and place_free_handicap. */
-// ==================================================================
 static int place_handicap(char *s, int fixed)
 {
     int handicap;
@@ -170,11 +169,11 @@ static int place_handicap(char *s, int fixed)
     for (m = 0; m < board_size; m++)
         for (n = 0; n < board_size; n++)
             if (get_board(m, n) != EMPTY) {
-	           if (first_stone)
-	               first_stone = 0;
-	           else
-	               gtp_printf(" ");
-	           gtp_mprintf("%m", m, n);
+                if (first_stone)
+                    first_stone = 0;
+                else
+                    gtp_printf(" ");
+                gtp_mprintf("%m", m, n);
             }
     return gtp_finish_response();
 }
@@ -257,7 +256,6 @@ static int gtp_genmove(char *s)
 /* Compute final score. We use area scoring since that is the only
  * option that makes sense for this move generation algorithm.
  */
-// ==================================================================
 static int gtp_final_score(char *s)
 {
     float score = komi;
@@ -268,13 +266,13 @@ static int gtp_final_score(char *s)
         for (j = 0; j < board_size; j++) {
             int status = get_final_status(i, j);
             if (status == BLACK_TERRITORY)
-	score--;
+                score--;
             else if (status == WHITE_TERRITORY)
-	score++;
+                score++;
             else if ((status == ALIVE) ^ (get_board(i, j) == WHITE))
-	score--;
+                score--;
             else
-	score++;
+                score++;
         }
 
     if (score > 0.0)
@@ -312,27 +310,26 @@ static int gtp_final_status_list(char *s)
     for (i = 0; i < board_size; i++)
         for (j = 0; j < board_size; j++)
             if (get_final_status(i, j) == status) {
-	int k;
-	int stonei[MAX_BOARD * MAX_BOARD];
-	int stonej[MAX_BOARD * MAX_BOARD];
-	int num_stones = get_string(i, j, stonei, stonej);
-	/* Clear the status so we don't find the string again. */
-	for (k = 0; k < num_stones; k++)
-	    set_final_status(stonei[k], stonej[k], UNKNOWN);
+                int k;
+                int stonei[MAX_BOARD * MAX_BOARD];
+                int stonej[MAX_BOARD * MAX_BOARD];
+                int num_stones = get_string(i, j, stonei, stonej);
+                /* Clear the status so we don't find the string again. */
+                for (k = 0; k < num_stones; k++)
+                    set_final_status(stonei[k], stonej[k], UNKNOWN);
 
-	if (first_string)
-	    first_string = 0;
-	else
-	    gtp_printf("\n");
+                if (first_string)
+                    first_string = 0;
+                else
+                    gtp_printf("\n");
 
-	gtp_print_vertices(num_stones, stonei, stonej);
+                gtp_print_vertices(num_stones, stonei, stonej);
             }
 
     return gtp_finish_response();
 }
 
-static int
-gtp_showboard(char *s)
+static int gtp_showboard(char *s)
 {
     int i, j, k;
     int symbols[3] = {'.', 'O', 'X'};
