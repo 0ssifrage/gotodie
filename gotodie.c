@@ -11,52 +11,25 @@ void init_gotodie(void)
 /* Generate a move. */
 void generate_move(int *i, int *j, int color)
 {
-    int moves[MAX_BOARDSIZE];
-    int num_moves = 0;
-    int move;
-    int ai, aj;
+    int ai, aj, bi, bj;
     int k;
+    int found = 0;
 
-    memset(moves, 0, sizeof(moves));
-    for (ai = 0; ai < board_size; ai++)
-        for (aj = 0; aj < board_size; aj++) {
-            /* Consider moving at (ai, aj) if it is legal and not suicide. */
-            if (legal_move(ai, aj, color)
-                && !suicide(ai, aj, color)) {
-                /* Further require the move not to be suicide for the
-                 * opponent...
-                 */
-                if (!suicide(ai, aj, OTHER_COLOR(color)))
-                    moves[num_moves++] = POS(ai, aj);
-                else {
-                    /* ...however, if the move captures at least one stone,
-                     * consider it anyway.
-                     */
-                    for (k = 0; k < 4; k++) {
-                        int bi = ai + deltai[k];
-                        int bj = aj + deltaj[k];
-                        if (ON_BOARD(bi, bj)
-                            && board[POS(bi, bj)] == OTHER_COLOR(color)) {
-                            moves[num_moves++] = POS(ai, aj);
-                            break;
-                        }
+    for (ai = 0; ai < board_size && !found; ai++)
+        for (aj = 0; aj < board_size && !found; aj++)
+            if (board[POS(ai, aj)] == OTHER_COLOR(color)) {
+                for (k = 0; k < 4 && !found; k++) {
+                    bi = ai + deltai[k];
+                    bj = aj + deltaj[k];
+                    if (ON_BOARD(bi, bj) && legal_move(bi, bj, color)
+                        && !suicide(bi, bj, color)) {
+                        *i = bi;
+                        *j = bj;
+                        found = 1;
                     }
                 }
             }
-        }
-
-    /* Choose one of the considered moves randomly with uniform
-     * distribution. (Strictly speaking the moves with smaller 1D
-     * coordinates tend to have a very slightly higher probability to be
-     * chosen, but for all practical purposes we get a uniform
-     * distribution.)
-     */
-    if (num_moves > 0) {
-        move = moves[rand() % num_moves];
-        *i = I(move);
-        *j = J(move);
-    } else {
-        /* But pass if no move was considered. */
+    if (!found) {
         *i = -1;
         *j = -1;
     }
