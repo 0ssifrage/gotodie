@@ -11,7 +11,7 @@ void init_gotodie(void)
 /* Generate a move. */
 void generate_move(int *i, int *j, int color)
 {
-    int moves[MAX_BOARD * MAX_BOARD];
+    int moves[MAX_BOARDSIZE];
     int num_moves = 0;
     int move;
     int ai, aj;
@@ -35,7 +35,7 @@ void generate_move(int *i, int *j, int color)
                     for (k = 0; k < 4; k++) {
                         int bi = ai + deltai[k];
                         int bj = aj + deltaj[k];
-                        if (on_board(bi, bj)
+                        if (ON_BOARD(bi, bj)
                             && board[POS(bi, bj)] == OTHER_COLOR(color)) {
                             moves[num_moves++] = POS(ai, aj);
                             break;

@@ -50,6 +50,7 @@ int main(int argc, char **argv)
 {
     setbuf(stdout, NULL);
     gtp_internal_set_boardsize(board_size);
+    board_array_size = board_size * board_size;
 
     init_gotodie();
 
@@ -122,6 +123,7 @@ static int gtp_boardsize(char *s)
 
     board_size = boardsize;
     gtp_internal_set_boardsize(boardsize);
+    board_array_size = boardsize * boardsize;
     init_gotodie();
 
     return gtp_success("");
@@ -214,7 +216,7 @@ static int gtp_set_free_handicap(char *s)
         return gtp_failure("invalid coordinate");
     }
 
-    if (handicap < 2 || handicap >= board_size * board_size) {
+    if (handicap < 2 || handicap >= board_array_size) {
         clear_board();
         return gtp_failure("invalid handicap");
     }
@@ -311,8 +313,8 @@ static int gtp_final_status_list(char *s)
         for (j = 0; j < board_size; j++)
             if (get_final_status(i, j) == status) {
                 int k;
-                int stonei[MAX_BOARD * MAX_BOARD];
-                int stonej[MAX_BOARD * MAX_BOARD];
+                int stonei[MAX_BOARDSIZE];
+                int stonej[MAX_BOARDSIZE];
                 int num_stones = get_string(i, j, stonei, stonej);
                 /* Clear the status so we don't find the string again. */
                 for (k = 0; k < num_stones; k++)

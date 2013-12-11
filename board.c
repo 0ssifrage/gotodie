@@ -9,6 +9,7 @@
  * and komi -3.14.
  */
 int board_size = 13;
+int board_array_size = 169;
 float komi = -3.14;
 
 intersection board[BOARDSIZE];
@@ -18,26 +19,24 @@ int deltai[4] = {-1, 1, 0, 0};
 int deltaj[4] = {0, 0, -1, 1};
 
 /* Stones are linked together in a circular list for each string. */
-static int next_stone[MAX_BOARD * MAX_BOARD];
+static int next_stone[MAX_BOARDSIZE];
 
 /* Storage for final status computations. */
-static int final_status[MAX_BOARD * MAX_BOARD];
+static int final_status[MAX_BOARDSIZE];
 
 /* Point which would be an illegal ko recapture. */
 static int ko_i, ko_j;
 
 
-void
-clear_board()
+void clear_board()
 {
     memset(board, 0, sizeof(board));
 }
 
-int
-board_empty()
+int board_empty()
 {
     int i;
-    for (i = 0; i < board_size * board_size; i++)
+    for (i = 0; i < board_array_size; i++)
         if (board[i] != EMPTY)
             return 0;
 
@@ -48,8 +47,7 @@ board_empty()
  * sufficiently large to hold any string on the board. The number of
  * stones in the string is returned.
  */
-int
-get_string(int i, int j, int *stonei, int *stonej)
+int get_string(int i, int j, int *stonei, int *stonej)
 {
     int num_stones = 0;
     int pos = POS(i, j);
@@ -63,25 +61,12 @@ get_string(int i, int j, int *stonei, int *stonej)
     return num_stones;
 }
 
-static int
-pass_move(int i, int j)
-{
-    return i == -1 && j == -1;
-}
-
-int
-on_board(int i, int j)
-{
-    return i >= 0 && i < board_size && j >= 0 && j < board_size;
-}
-
-int
-legal_move(int i, int j, int color)
+int legal_move(int i, int j, int color)
 {
     int other = OTHER_COLOR(color);
 
     /* Pass is always legal. */
-    if (pass_move(i, j))
+    if (PASS_MOVE(i, j))
         return 1;
 
     /* Already occupied. */
@@ -92,8 +77,8 @@ legal_move(int i, int j, int color)
      * check the color of at least one neighbor.
      */
     if (i == ko_i && j == ko_j
-            && ((on_board(i - 1, j) && board[POS(i - 1, j)] == other)
-        || (on_board(i + 1, j) && board[POS(i + 1, j)] == other)))
+            && ((ON_BOARD(i - 1, j) && board[POS(i - 1, j)] == other)
+        || (ON_BOARD(i + 1, j) && board[POS(i + 1, j)] == other)))
         return 0;
 
     return 1;
@@ -102,8 +87,7 @@ legal_move(int i, int j, int color)
 /* Does the string at (i, j) have any more liberty than the one at
  * (libi, libj)?
  */
-static int
-has_additional_liberty(int i, int j, int libi, int libj)
+static int has_additional_liberty(int i, int j, int libi, int libj)
 {
     int pos = POS(i, j);
     do {
@@ -113,8 +97,8 @@ has_additional_liberty(int i, int j, int libi, int libj)
         for (k = 0; k < 4; k++) {
             int bi = ai + deltai[k];
             int bj = aj + deltaj[k];
-            if (on_board(bi, bj) && board[POS(bi, bj)] == EMPTY
-        && (bi != libi || bj != libj))
+            if (ON_BOARD(bi, bj) && board[POS(bi, bj)] == EMPTY
+                && (bi != libi || bj != libj))
             return 1;
         }
 
@@ -125,11 +109,10 @@ has_additional_liberty(int i, int j, int libi, int libj)
 }
 
 /* Does (ai, aj) provide a liberty for a stone at (i, j)? */
-static int
-provides_liberty(int ai, int aj, int i, int j, int color)
+static int provides_liberty(int ai, int aj, int i, int j, int color)
 {
     /* A vertex off the board does not provide a liberty. */
-    if (!on_board(ai, aj))
+    if (!ON_BOARD(ai, aj))
         return 0;
 
     /* An empty vertex IS a liberty. */
@@ -149,8 +132,7 @@ provides_liberty(int ai, int aj, int i, int j, int color)
 }
 
 /* Is a move at (i, j) suicide for color? */
-int
-suicide(int i, int j, int color)
+int suicide(int i, int j, int color)
 {
     int k;
     for (k = 0; k < 4; k++)
@@ -164,8 +146,7 @@ suicide(int i, int j, int color)
  * the next_stone array since this only matters where there are
  * stones present and the entire string is removed.
  */
-static int
-remove_string(int i, int j)
+static int remove_string(int i, int j)
 {
     int pos = POS(i, j);
     int removed = 0;
@@ -181,8 +162,7 @@ remove_string(int i, int j)
 /* Do two vertices belong to the same string. It is required that both
  * pos1 and pos2 point to vertices with stones.
  */
-static int
-same_string(int pos1, int pos2)
+static int same_string(int pos1, int pos2)
 {
     int pos = pos1;
     do {
@@ -209,7 +189,7 @@ void play_move(int i, int j, int color)
     ko_j = -1;
 
     /* Nothing more happens if the move was a pass. */
-    if (pass_move(i, j))
+    if (PASS_MOVE(i, j))
         return;
 
     /* If the move is a suicide we only need to remove the adjacent
@@ -219,9 +199,9 @@ void play_move(int i, int j, int color)
         for (k = 0; k < 4; k++) {
             int ai = i + deltai[k];
             int aj = j + deltaj[k];
-            if (on_board(ai, aj)
-        && board[POS(ai, aj)] == color)
-    remove_string(ai, aj);
+            if (ON_BOARD(ai, aj)
+                && board[POS(ai, aj)] == color)
+            remove_string(ai, aj);
         }
         return;
     }
@@ -230,9 +210,9 @@ void play_move(int i, int j, int color)
     for (k = 0; k < 4; k++) {
         int ai = i + deltai[k];
         int aj = j + deltaj[k];
-        if (on_board(ai, aj)
-    && board[POS(ai, aj)] == OTHER_COLOR(color)
-    && !has_additional_liberty(ai, aj, i, j))
+        if (ON_BOARD(ai, aj)
+            && board[POS(ai, aj)] == OTHER_COLOR(color)
+            && !has_additional_liberty(ai, aj, i, j))
             captured_stones += remove_string(ai, aj);
     }
 
@@ -253,7 +233,8 @@ void play_move(int i, int j, int color)
          * may happen if the same string neighbors the new stone in more
          * than one direction.
          */
-        if (on_board(ai, aj) && board[pos2] == color && !same_string(pos, pos2)) {
+        if (ON_BOARD(ai, aj) && board[pos2] == color
+            && !same_string(pos, pos2)) {
             /* The strings are linked together simply by swapping the the
              * next_stone pointers.
              */
@@ -276,8 +257,8 @@ void play_move(int i, int j, int color)
         for (k = 0; k < 4; k++) {
             ai = i + deltai[k];
             aj = j + deltaj[k];
-            if (on_board(ai, aj) && board[POS(ai, aj)] == EMPTY)
-    break;
+            if (ON_BOARD(ai, aj) && board[POS(ai, aj)] == EMPTY)
+                break;
         }
 
         if (!has_additional_liberty(i, j, ai, aj)) {
@@ -288,8 +269,7 @@ void play_move(int i, int j, int color)
 }
 
 /* Set a final status value for an entire string. */
-static void
-set_final_status_string(int pos, int status)
+static void set_final_status_string(int pos, int status)
 {
     int pos2 = pos;
     do {
@@ -317,17 +297,16 @@ set_final_status_string(int pos, int status)
  * leave a seki on the board.
  *
  * Comment: This algorithm doesn't work properly if the game ends with
- *                    an unfilled ko. If three passes are required for game end,
- *                    that will not happen.
+ *          an unfilled ko. If three passes are required for game end,
+ *          that will not happen.
  */
-void
-compute_final_status(void)
+void compute_final_status(void)
 {
     int i, j;
     int pos;
     int k;
 
-    for (pos = 0; pos < board_size * board_size; pos++)
+    for (pos = 0; pos < board_array_size; pos++)
         final_status[pos] = UNKNOWN;
 
     for (i = 0; i < board_size; i++)
@@ -336,7 +315,7 @@ compute_final_status(void)
     for (k = 0; k < 4; k++) {
         int ai = i + deltai[k];
         int aj = j + deltaj[k];
-        if (!on_board(ai, aj))
+        if (!ON_BOARD(ai, aj))
             continue;
         /* When the game is finished, we know for sure that (ai, aj)
                      * contains a stone. The move generation algorithm would
@@ -352,9 +331,9 @@ compute_final_status(void)
         if (final_status[pos] == UNKNOWN) {
             if (board[POS(ai, aj)] != EMPTY) {
                 if (has_additional_liberty(ai, aj, i, j))
-        set_final_status_string(pos, ALIVE);
+                    set_final_status_string(pos, ALIVE);
                 else
-        set_final_status_string(pos, DEAD);
+                    set_final_status_string(pos, DEAD);
             }
         }
         /* Set the final status of the (i, j) vertex to either black
@@ -369,14 +348,12 @@ compute_final_status(void)
     }
 }
 
-int
-get_final_status(int i, int j)
+int get_final_status(int i, int j)
 {
     return final_status[POS(i, j)];
 }
 
-void
-set_final_status(int i, int j, int status)
+void set_final_status(int i, int j, int status)
 {
     final_status[POS(i, j)] = status;
 }
@@ -384,8 +361,7 @@ set_final_status(int i, int j, int status)
 /* Valid number of stones for fixed placement handicaps. These are
  * compatible with the GTP fixed handicap placement rules.
  */
-int
-valid_fixed_handicap(int handicap)
+int valid_fixed_handicap(int handicap)
 {
     if (handicap < 2 || handicap > 9)
         return 0;
@@ -402,8 +378,7 @@ valid_fixed_handicap(int handicap)
 /* Put fixed placement handicap stones on the board. The placement is
  * compatible with the GTP fixed handicap placement rules.
  */
-void
-place_fixed_handicap(int handicap)
+void place_fixed_handicap(int handicap)
 {
     int low = board_size >= 13 ? 3 : 2;
     int mid = board_size / 2;
