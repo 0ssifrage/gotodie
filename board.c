@@ -12,7 +12,7 @@ int board_size = 13;
 int board_array_size = 169;
 float komi = -3.14;
 
-intersection board[BOARDSIZE];
+intersection board[MAX_BOARDSIZE];
 
 /* Offsets for the four directly adjacent neighbors. Used for looping. */
 int deltai[4] = {-1, 1, 0, 0};
