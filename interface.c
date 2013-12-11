@@ -168,7 +168,7 @@ static int place_handicap(char *s, int fixed)
     gtp_start_response(GTP_SUCCESS);
     for (m = 0; m < board_size; m++)
         for (n = 0; n < board_size; n++)
-            if (get_board(m, n) != EMPTY) {
+            if (board[POS(m, n)] != EMPTY) {
                 if (first_stone)
                     first_stone = 0;
                 else
@@ -200,7 +200,7 @@ static int gtp_set_free_handicap(char *s)
     while ((n = gtp_decode_coord(s, &i, &j)) > 0) {
         s += n;
 
-        if (get_board(i, j) != EMPTY) {
+        if (board[POS(i, j)] != EMPTY) {
             clear_board();
             return gtp_failure("repeated vertex");
         }
@@ -269,7 +269,7 @@ static int gtp_final_score(char *s)
                 score--;
             else if (status == WHITE_TERRITORY)
                 score++;
-            else if ((status == ALIVE) ^ (get_board(i, j) == WHITE))
+            else if ((status == ALIVE) ^ (board[POS(i, j)] == WHITE))
                 score--;
             else
                 score++;
@@ -345,7 +345,7 @@ static int gtp_showboard(char *s)
         printf("\n%2d", board_size - i);
 
         for (j = 0; j < board_size; j++)
-            printf(" %c", symbols[get_board(i, j)]);
+            printf(" %c", symbols[board[POS(i, j)]]);
 
         printf(" %d", board_size - i);
     }

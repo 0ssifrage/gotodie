@@ -17,7 +17,12 @@ typedef unsigned char intersection;
 
 extern float komi;
 extern int board_size;
-// extern intersection board[BOARDSIZE];
+
+/* Board represented by a 1D array. The first board_size*board_size
+ * elements are used. Vertices are indexed row by row, starting with 0
+ * in the upper left corner.
+ */
+extern intersection board[BOARDSIZE];
 
 /* Offsets for the four directly adjacent neighbors. Used for looping. */
 extern int deltai[4];
@@ -36,7 +41,6 @@ extern int deltaj[4];
 
 void clear_board(void);
 int board_empty(void);
-int get_board(int i, int j);
 int get_string(int i, int j, int *stonei, int *stonej);
 int on_board(int i, int j);
 int legal_move(int i, int j, int color);

@@ -11,15 +11,11 @@
 int board_size = 13;
 float komi = -3.14;
 
+intersection board[BOARDSIZE];
+
 /* Offsets for the four directly adjacent neighbors. Used for looping. */
 int deltai[4] = {-1, 1, 0, 0};
 int deltaj[4] = {0, 0, -1, 1};
-
-/* Board represented by a 1D array. The first board_size*board_size
- * elements are used. Vertices are indexed row by row, starting with 0
- * in the upper left corner.
- */
-static int board[MAX_BOARD * MAX_BOARD];
 
 /* Stones are linked together in a circular list for each string. */
 static int next_stone[MAX_BOARD * MAX_BOARD];
@@ -46,12 +42,6 @@ board_empty()
             return 0;
 
     return 1;
-}
-
-int
-get_board(int i, int j)
-{
-    return board[i * board_size + j];
 }
 
 /* Get the stones of a string. stonei and stonej must point to arrays
@@ -95,15 +85,15 @@ legal_move(int i, int j, int color)
         return 1;
 
     /* Already occupied. */
-    if (get_board(i, j) != EMPTY)
+    if (board[POS(i, j)] != EMPTY)
         return 0;
 
     /* Illegal ko recapture. It is not illegal to fill the ko so we must
      * check the color of at least one neighbor.
      */
     if (i == ko_i && j == ko_j
-            && ((on_board(i - 1, j) && get_board(i - 1, j) == other)
-        || (on_board(i + 1, j) && get_board(i + 1, j) == other)))
+            && ((on_board(i - 1, j) && board[POS(i - 1, j)] == other)
+        || (on_board(i + 1, j) && board[POS(i + 1, j)] == other)))
         return 0;
 
     return 1;
@@ -123,7 +113,7 @@ has_additional_liberty(int i, int j, int libi, int libj)
         for (k = 0; k < 4; k++) {
             int bi = ai + deltai[k];
             int bj = aj + deltaj[k];
-            if (on_board(bi, bj) && get_board(bi, bj) == EMPTY
+            if (on_board(bi, bj) && board[POS(bi, bj)] == EMPTY
         && (bi != libi || bj != libj))
             return 1;
         }
@@ -143,13 +133,13 @@ provides_liberty(int ai, int aj, int i, int j, int color)
         return 0;
 
     /* An empty vertex IS a liberty. */
-    if (get_board(ai, aj) == EMPTY)
+    if (board[POS(ai, aj)] == EMPTY)
         return 1;
 
     /* A friendly string provides a liberty to (i, j) if it currently
      * has more liberties than the one at (i, j).
      */
-    if (get_board(ai, aj) == color)
+    if (board[POS(ai, aj)] == color)
         return has_additional_liberty(ai, aj, i, j);
 
     /* An unfriendly string provides a liberty if and only if it is
@@ -230,7 +220,7 @@ void play_move(int i, int j, int color)
             int ai = i + deltai[k];
             int aj = j + deltaj[k];
             if (on_board(ai, aj)
-        && get_board(ai, aj) == color)
+        && board[POS(ai, aj)] == color)
     remove_string(ai, aj);
         }
         return;
@@ -241,7 +231,7 @@ void play_move(int i, int j, int color)
         int ai = i + deltai[k];
         int aj = j + deltaj[k];
         if (on_board(ai, aj)
-    && get_board(ai, aj) == OTHER_COLOR(color)
+    && board[POS(ai, aj)] == OTHER_COLOR(color)
     && !has_additional_liberty(ai, aj, i, j))
             captured_stones += remove_string(ai, aj);
     }
@@ -286,7 +276,7 @@ void play_move(int i, int j, int color)
         for (k = 0; k < 4; k++) {
             ai = i + deltai[k];
             aj = j + deltaj[k];
-            if (on_board(ai, aj) && get_board(ai, aj) == EMPTY)
+            if (on_board(ai, aj) && board[POS(ai, aj)] == EMPTY)
     break;
         }
 
@@ -342,7 +332,7 @@ compute_final_status(void)
 
     for (i = 0; i < board_size; i++)
         for (j = 0; j < board_size; j++)
-            if (get_board(i, j) == EMPTY)
+            if (board[POS(i, j)] == EMPTY)
     for (k = 0; k < 4; k++) {
         int ai = i + deltai[k];
         int aj = j + deltaj[k];
@@ -360,7 +350,7 @@ compute_final_status(void)
          */
         pos = POS(ai, aj);
         if (final_status[pos] == UNKNOWN) {
-            if (get_board(ai, aj) != EMPTY) {
+            if (board[POS(ai, aj)] != EMPTY) {
                 if (has_additional_liberty(ai, aj, i, j))
         set_final_status_string(pos, ALIVE);
                 else
@@ -371,7 +361,7 @@ compute_final_status(void)
                      * or white territory.
          */
         if (final_status[POS(i, j)] == UNKNOWN) {
-            if ((final_status[pos] == ALIVE) ^ (get_board(ai, aj) == WHITE))
+            if ((final_status[pos] == ALIVE) ^ (board[POS(ai, aj)] == WHITE))
                 final_status[POS(i, j)] = BLACK_TERRITORY;
             else
                 final_status[POS(i, j)] = WHITE_TERRITORY;

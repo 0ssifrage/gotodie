@@ -5,20 +5,7 @@
 
 void init_gotodie(void)
 {
-    int k;
-    int i, j;
-
-    /* The GTP specification leaves the initial board configuration as
-     * well as the board configuration after a boardsize command to the
-     * discretion of the engine. We choose to start with up to 20 random
-     * stones on the board.
-     */
     clear_board();
-/*    for (k = 0; k < 20; k++) {
-        int color = rand() % 2 ? BLACK : WHITE;
-        generate_move(&i, &j, color);
-        play_move(i, j, color);
-    }*/
 }
 
 /* Generate a move. */
@@ -49,7 +36,7 @@ void generate_move(int *i, int *j, int color)
                         int bi = ai + deltai[k];
                         int bj = aj + deltaj[k];
                         if (on_board(bi, bj)
-                            && get_board(bi, bj) == OTHER_COLOR(color)) {
+                            && board[POS(bi, bj)] == OTHER_COLOR(color)) {
                             moves[num_moves++] = POS(ai, aj);
                             break;
                         }
