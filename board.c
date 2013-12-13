@@ -29,8 +29,14 @@ static int final_status[MAX_BOARDSIZE];
 /* Point which would be an illegal ko recapture. */
 static int ko_i, ko_j;
 
-static FILE *debug_file;
 
+void debug_log(char *s)
+{
+    FILE *debug_file;
+    debug_file = fopen("debug.log", "a");
+    fprintf(debug_file, "%s", s);
+    fclose(debug_file);
+}
 
 void clear_board()
 {
@@ -215,10 +221,7 @@ void play_move(int i, int j, int color)
     ko_i = -1;
     ko_j = -1;
 
-    debug_file = fopen("debug.log", "a");
     last_move_pos = pos;
-    fprintf(debug_file, "%d\n", last_move_pos);
-    fclose(debug_file);
 
     /* Nothing more happens if the move was a pass. */
     if (PASS_MOVE(i, j))

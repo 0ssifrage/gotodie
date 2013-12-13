@@ -39,6 +39,8 @@ extern int father[MAX_BOARDSIZE];
 #define ON_BOARD(i, j) \
     ((i) >= 0 && (i) < board_size && (j) >= 0 && (j) < board_size)
 
+
+void debug_log(char *s);
 void clear_board(void);
 int board_empty(void);
 int get_string(int i, int j, int *stonei, int *stonej);
