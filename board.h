@@ -20,10 +20,14 @@ extern int board_size;
 extern int board_array_size;
 
 extern intersection board[MAX_BOARDSIZE];
+extern int last_move_pos;
 
 /* Offsets for the four directly adjacent neighbors. Used for looping. */
 extern int deltai[4];
 extern int deltaj[4];
+
+extern int next_stone[MAX_BOARDSIZE];
+extern int father[MAX_BOARDSIZE];
 
 #define POS(i, j) ((i) * board_size + (j))
 #define I(pos) ((pos) / board_size)

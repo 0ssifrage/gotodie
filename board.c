@@ -13,13 +13,15 @@ int board_array_size = 169;
 float komi = -3.14;
 
 intersection board[MAX_BOARDSIZE];
+int last_move_pos = -1;
 
 /* Offsets for the four directly adjacent neighbors. Used for looping. */
 int deltai[4] = {-1, 1, 0, 0};
 int deltaj[4] = {0, 0, -1, 1};
 
 /* Stones are linked together in a circular list for each string. */
-static int next_stone[MAX_BOARDSIZE];
+int next_stone[MAX_BOARDSIZE];
+int father[MAX_BOARDSIZE];
 
 /* Storage for final status computations. */
 static int final_status[MAX_BOARDSIZE];
@@ -27,9 +29,14 @@ static int final_status[MAX_BOARDSIZE];
 /* Point which would be an illegal ko recapture. */
 static int ko_i, ko_j;
 
+static FILE *debug_file;
+
 
 void clear_board()
 {
+    int pos;
+    for (pos = 0; pos < board_array_size; pos++)
+        father[pos] = -1;
     memset(board, 0, sizeof(board));
 }
 
@@ -77,8 +84,8 @@ int legal_move(int i, int j, int color)
      * check the color of at least one neighbor.
      */
     if (i == ko_i && j == ko_j
-            && ((ON_BOARD(i - 1, j) && board[POS(i - 1, j)] == other)
-        || (ON_BOARD(i + 1, j) && board[POS(i + 1, j)] == other)))
+        && ((ON_BOARD(i - 1, j) && board[POS(i - 1, j)] == other)
+            || (ON_BOARD(i + 1, j) && board[POS(i + 1, j)] == other)))
         return 0;
 
     return 1;
@@ -154,9 +161,18 @@ static int remove_string(int i, int j)
         board[pos] = EMPTY;
         removed++;
         pos = next_stone[pos];
+        father[pos] = -1;
     } while (pos != POS(i, j));
 
     return removed;
+}
+
+static int get_father(int pos)
+{
+    if (father[pos] == pos)
+        return pos;
+    father[pos] = get_father(father[pos]);
+    return father[pos];
 }
 
 /* Do two vertices belong to the same string. It is required that both
@@ -164,15 +180,26 @@ static int remove_string(int i, int j)
  */
 static int same_string(int pos1, int pos2)
 {
-    int pos = pos1;
+/*    int pos = pos1;
     do {
         if (pos == pos2)
             return 1;
         pos = next_stone[pos];
-    } while (pos != pos1);
-
-    return 0;
+    } while (pos != pos1);*/
+    return (get_father(pos1) == get_father(pos2));
 }
+
+static void union_string(int pos1, int pos2)
+{
+    int tmp = next_stone[pos2];
+    next_stone[pos2] = next_stone[pos1];
+    next_stone[pos1] = tmp;
+    int f1 = get_father(pos1);
+    int f2 = get_father(pos2);
+    if (f1 != f2)
+        father[f1] = f2;
+}
+
 
 /* Play at (i, j) for color. No legality check is done here. We need
  * to properly update the board array, the next_stone array, and the
@@ -187,6 +214,11 @@ void play_move(int i, int j, int color)
     /* Reset the ko point. */
     ko_i = -1;
     ko_j = -1;
+
+    debug_file = fopen("debug.log", "a");
+    last_move_pos = pos;
+    fprintf(debug_file, "%d\n", last_move_pos);
+    fclose(debug_file);
 
     /* Nothing more happens if the move was a pass. */
     if (PASS_MOVE(i, j))
@@ -221,6 +253,7 @@ void play_move(int i, int j, int color)
      */
     board[pos] = color;
     next_stone[pos] = pos;
+    father[pos] = pos;
 
     /* If we have friendly neighbor strings we need to link the strings
      * together.
@@ -238,9 +271,7 @@ void play_move(int i, int j, int color)
             /* The strings are linked together simply by swapping the the
              * next_stone pointers.
              */
-            int tmp = next_stone[pos2];
-            next_stone[pos2] = next_stone[pos];
-            next_stone[pos] = tmp;
+            union_string(pos, pos2);
         }
     }
 
