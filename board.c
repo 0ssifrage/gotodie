@@ -195,16 +195,23 @@ static int remove_string(int i, int j)
     int pos = POS(i, j);
     int fa = get_father(pos);
     int removed = 0;
-    int k, pos2, ai, aj;
+    int k, pos2, ai, aj, f2;
+
     do {
         for (k = 0; k < 4; k++) {
             ai = i + deltai[k];
             aj = j + deltaj[k];
             pos2 = POS(ai, aj);
-            if (ON_BOARD(ai, aj) && IS_STONE(pos2))
-                approximate_liberty[string_index[get_father(pos2)]]++;
+            if (ON_BOARD(ai, aj) && IS_STONE(pos2)) {
+                f2 = get_father(pos2);
+                if (f2 != fa)
+                    approximate_liberty[string_index[f2]]++;
+            }
         }
+    } while (pos != POS(i, j));
 
+    pos = POS(i, j);
+    do {
         board[pos] = EMPTY;
         removed++;
         pos = next_stone[pos];
