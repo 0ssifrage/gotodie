@@ -31,6 +31,7 @@ extern int father[MAX_BOARDSIZE];
 extern int strings[MAX_BOARDSIZE];
 intersection string_color[MAX_BOARDSIZE];
 extern int string_stones[MAX_BOARDSIZE];
+extern int approximate_liberty[MAX_BOARDSIZE];
 extern int num_of_strings;
 extern int string_index[MAX_BOARDSIZE];
 
@@ -43,6 +44,8 @@ extern int string_index[MAX_BOARDSIZE];
 #define PASS_MOVE(i, j) ((i) == -1 && (j) == -1)
 #define ON_BOARD(i, j) \
     ((i) >= 0 && (i) < board_size && (j) >= 0 && (j) < board_size)
+#define IS_STONE(pos) \
+    ((board[pos] == BLACK) || (board[pos] == WHITE))
 
 
 void debug_log(char *s);
