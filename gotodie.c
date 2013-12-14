@@ -9,7 +9,7 @@ void init_gotodie(void)
 }
 
 /* Generate a move. */
-void generate_move(int *i, int *j, int color)
+void generate_move(int *i, int *j, intersection color)
 {
     int moves[MAX_BOARDSIZE];
     int num_moves = 0;

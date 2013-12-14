@@ -22,6 +22,14 @@ int deltaj[4] = {0, 0, -1, 1};
 /* Stones are linked together in a circular list for each string. */
 int next_stone[MAX_BOARDSIZE];
 int father[MAX_BOARDSIZE];
+/* all strings in the board */
+int strings[MAX_BOARDSIZE];
+intersection string_color[MAX_BOARDSIZE];
+int string_stones[MAX_BOARDSIZE];
+int num_of_strings;
+/* strings[string_index[get_father(pos)]] = get_father(pos) */
+int string_index[MAX_BOARDSIZE];
+
 
 /* Storage for final status computations. */
 static int final_status[MAX_BOARDSIZE];
@@ -43,6 +51,7 @@ void clear_board()
     int pos;
     for (pos = 0; pos < board_array_size; pos++)
         father[pos] = -1;
+    num_of_strings = 0;
     memset(board, 0, sizeof(board));
 }
 
@@ -74,9 +83,9 @@ int get_string(int i, int j, int *stonei, int *stonej)
     return num_stones;
 }
 
-int legal_move(int i, int j, int color)
+int legal_move(int i, int j, intersection color)
 {
-    int other = OTHER_COLOR(color);
+    intersection other = OTHER_COLOR(color);
 
     /* Pass is always legal. */
     if (PASS_MOVE(i, j))
@@ -122,7 +131,7 @@ static int has_additional_liberty(int i, int j, int libi, int libj)
 }
 
 /* Does (ai, aj) provide a liberty for a stone at (i, j)? */
-static int provides_liberty(int ai, int aj, int i, int j, int color)
+static int provides_liberty(int ai, int aj, int i, int j, intersection color)
 {
     /* A vertex off the board does not provide a liberty. */
     if (!ON_BOARD(ai, aj))
@@ -145,7 +154,7 @@ static int provides_liberty(int ai, int aj, int i, int j, int color)
 }
 
 /* Is a move at (i, j) suicide for color? */
-int suicide(int i, int j, int color)
+int suicide(int i, int j, intersection color)
 {
     int k;
     for (k = 0; k < 4; k++)
@@ -155,6 +164,26 @@ int suicide(int i, int j, int color)
     return 1;
 }
 
+static int get_father(int pos)
+{
+    if (father[pos] == pos)
+        return pos;
+    father[pos] = get_father(father[pos]);
+    return father[pos];
+}
+
+static void remove_string_from_strings(int fa)
+{
+    int str_idx = string_index[fa];
+    if (str_idx != num_of_strings) {
+        strings[str_idx] = strings[num_of_strings];
+        string_color[str_idx] = string_color[num_of_strings];
+        string_stones[str_idx] = string_stones[num_of_strings];
+        string_index[strings[str_idx]] = str_idx;
+    }
+    num_of_strings--;
+}
+
 /* Remove a string from the board array. There is no need to modify
  * the next_stone array since this only matters where there are
  * stones present and the entire string is removed.
@@ -162,6 +191,7 @@ int suicide(int i, int j, int color)
 static int remove_string(int i, int j)
 {
     int pos = POS(i, j);
+    int fa = get_father(pos);
     int removed = 0;
     do {
         board[pos] = EMPTY;
@@ -170,15 +200,9 @@ static int remove_string(int i, int j)
         father[pos] = -1;
     } while (pos != POS(i, j));
 
-    return removed;
-}
+    remove_string_from_strings(fa);
 
-static int get_father(int pos)
-{
-    if (father[pos] == pos)
-        return pos;
-    father[pos] = get_father(father[pos]);
-    return father[pos];
+    return removed;
 }
 
 /* Do two vertices belong to the same string. It is required that both
@@ -202,8 +226,11 @@ static void union_string(int pos1, int pos2)
     next_stone[pos1] = tmp;
     int f1 = get_father(pos1);
     int f2 = get_father(pos2);
-    if (f1 != f2)
-        father[f1] = f2;
+    if (f1 != f2) {
+        father[f2] = f1;
+        string_stones[f1] += string_stones[f2];
+        remove_string_from_strings(f2);
+    }
 }
 
 
@@ -211,7 +238,7 @@ static void union_string(int pos1, int pos2)
  * to properly update the board array, the next_stone array, and the
  * ko point.
  */
-void play_move(int i, int j, int color)
+void play_move(int i, int j, intersection color)
 {
     int pos = POS(i, j);
     int captured_stones = 0;
@@ -257,6 +284,11 @@ void play_move(int i, int j, int color)
     board[pos] = color;
     next_stone[pos] = pos;
     father[pos] = pos;
+    num_of_strings++;
+    string_index[pos] = num_of_strings;
+    strings[num_of_strings] = pos;
+    string_stones[num_of_strings] = 1;
+    string_color[num_of_strings] = color;
 
     /* If we have friendly neighbor strings we need to link the strings
      * together.
@@ -271,9 +303,6 @@ void play_move(int i, int j, int color)
          */
         if (ON_BOARD(ai, aj) && board[pos2] == color
             && !same_string(pos, pos2)) {
-            /* The strings are linked together simply by swapping the the
-             * next_stone pointers.
-             */
             union_string(pos, pos2);
         }
     }
