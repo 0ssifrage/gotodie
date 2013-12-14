@@ -16,8 +16,8 @@ intersection board[MAX_BOARDSIZE];
 int last_move_pos = -1;
 
 /* Offsets for the four directly adjacent neighbors. Used for looping. */
-int deltai[4] = {-1, 1, 0, 0};
-int deltaj[4] = {0, 0, -1, 1};
+int deltai[4] = {-1, 0, 1, 0};
+int deltaj[4] = {0, -1, 0, 1};
 
 /* Stones are linked together in a circular list for each string. */
 int next_stone[MAX_BOARDSIZE];
@@ -196,15 +196,20 @@ static int remove_string(int i, int j)
     int fa = get_father(pos);
     int removed = 0;
     int k, pos2, ai, aj;
+
     do {
         for (k = 0; k < 4; k++) {
-            ai = i + deltai[k];
-            aj = j + deltaj[k];
+            ai = I(pos) + deltai[k];
+            aj = J(pos) + deltaj[k];
             pos2 = POS(ai, aj);
-            if (ON_BOARD(ai, aj) && IS_STONE(pos2))
+
+            if (ON_BOARD(ai, aj) && IS_STONE(pos2) && (get_father(pos2) != fa))
                 approximate_liberty[string_index[get_father(pos2)]]++;
         }
+    } while (pos != POS(i, j));
 
+    pos = POS(i, j);
+    do {
         board[pos] = EMPTY;
         removed++;
         pos = next_stone[pos];

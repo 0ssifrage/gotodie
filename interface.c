@@ -247,11 +247,15 @@ static int gtp_genmove(char *s)
     if (!gtp_decode_color(s, &color))
         return gtp_failure("invalid color");
 
-    generate_move(&i, &j, color);
+    int pos = generate_move(color);
+    i = I(pos);
+    j = J(pos);
+
     play_move(i, j, color);
 
     gtp_start_response(GTP_SUCCESS);
     gtp_mprintf("%m", i, j);
+
     return gtp_finish_response();
 }
 
