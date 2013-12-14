@@ -228,7 +228,7 @@ static void union_string(int pos1, int pos2)
     int f2 = get_father(pos2);
     if (f1 != f2) {
         father[f2] = f1;
-        string_stones[f1] += string_stones[f2];
+        string_stones[string_index[f1]] += string_stones[string_index[f2]];
         remove_string_from_strings(f2);
     }
 }
