@@ -15,7 +15,7 @@ int generate_move(intersection color)
     int flag[board_array_size];
     int other_color_cnt = 0;
     int si;
-    float min_appr_lib, tmp;
+    float max_value, tmp;
     int min_pos;
     int k, spos, bi, bj;
     for (si = 1; si <= num_of_strings; si++) {
@@ -26,14 +26,14 @@ int generate_move(intersection color)
     }
 
     while (other_color_cnt > 0) {
-        min_appr_lib = -board_array_size;
+        max_value = -board_array_size;
         min_pos = POS(-1, -1);
         for (si = 1; si <= num_of_strings; si++) {
             if (string_color[si] == other_color && flag[si])
-                tmp = string_stones[si] - approximate_liberty[si] / 4;
+                tmp = string_stones[si] * 10 - approximate_liberty[si];
                 // tmp = string_stones[si];
-                if (tmp > min_appr_lib) {
-                    min_appr_lib = tmp;
+                if (tmp > max_value) {
+                    max_value = tmp;
                     min_pos = strings[si];
                 }
         }

@@ -16,8 +16,8 @@ intersection board[MAX_BOARDSIZE];
 int last_move_pos = -1;
 
 /* Offsets for the four directly adjacent neighbors. Used for looping. */
-int deltai[4] = {-1, 0, 1, 0};
-int deltaj[4] = {0, -1, 0, 1};
+int deltai[4] = {-1, 1, 0, 0};
+int deltaj[4] = {0, 0, -1, 1};
 
 /* Stones are linked together in a circular list for each string. */
 int next_stone[MAX_BOARDSIZE];
