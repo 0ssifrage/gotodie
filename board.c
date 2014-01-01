@@ -50,6 +50,7 @@ void debug_log_board_status(board_status *bs) {
         fprintf(debug_file, "\n");
     }
     fprintf(debug_file, "\n");
+
     fclose(debug_file);
 }
 
@@ -466,12 +467,12 @@ void set_final_status(board_status *bs, int i, int j, int status)
 double get_score(board_status *bs)
 {
     double score = komi;
-    int i, j;
+    int i, j, status;
 
     compute_final_status(bs);
     for (i = 0; i < board_size; i++)
         for (j = 0; j < board_size; j++) {
-            int status = get_final_status(bs, i, j);
+            status = get_final_status(bs, i, j);
             if (status == BLACK_TERRITORY)
                 score--;
             else if (status == WHITE_TERRITORY)
@@ -482,8 +483,7 @@ double get_score(board_status *bs)
                 score++;
         }
 
-    if (score > 0.0)
-        return score;
+    return score;
 }
 
 /* Valid number of stones for fixed placement handicaps. These are

@@ -17,5 +17,7 @@ double simulate_game(board_status *bs, intersection color) {
         play_move(bs, i, j, color_now);
         color_now = OTHER_COLOR(color_now);
     }
-    debug_log_board_status(bs);
+    // debug_log_board_status(bs);
+
+    return get_score(bs);
 }

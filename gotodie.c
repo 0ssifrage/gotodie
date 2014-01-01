@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "gotodie.h"
 
 void init_gotodie(void)
