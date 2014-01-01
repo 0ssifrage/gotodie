@@ -1,4 +1,5 @@
 gotodie
-debug.log
+*.log
 brown
+test_uct
 

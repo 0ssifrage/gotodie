@@ -1,3 +1,9 @@
+#ifndef _UCT_H_
+#define _UCT_H_
+
 #include "board.h"
 
-double simulate_game(board_state *bs);
+extern double simulate_game(board_status *bs, intersection color);
+
+
+#endif
