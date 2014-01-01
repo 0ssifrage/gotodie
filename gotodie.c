@@ -20,9 +20,6 @@ void generate_move(board_status *bs, int *i, int *j, intersection color)
      * chosen, but for all practical purposes we get a uniform
      * distribution.)
      */
-    char s[10];
-    sprintf(s, "%d\n", bs->legal_moves_num);
-    debug_log(s);
     if (bs->legal_moves_num > 0) {
         move = bs->legal_moves[rand() % bs->legal_moves_num];
         *i = I(move);
@@ -32,8 +29,6 @@ void generate_move(board_status *bs, int *i, int *j, intersection color)
         *i = -1;
         *j = -1;
     }
-    sprintf(s, ">%d\n", color);
-    debug_log(s);
 }
 
 /* Put free placement handicap stones on the board. We do this simply
