@@ -10,39 +10,9 @@ void init_gotodie(void)
 /* Generate a move. */
 void generate_move(board_status *bs, int *i, int *j, intersection color)
 {
-    int moves[MAX_BOARDSIZE];
-    int num_moves = 0;
     int move;
-    int ai, aj;
-    int k;
 
-    memset(moves, 0, sizeof(moves));
-    for (ai = 0; ai < board_size; ai++)
-        for (aj = 0; aj < board_size; aj++) {
-            /* Consider moving at (ai, aj) if it is legal and not suicide. */
-            if (legal_move(bs, ai, aj, color)
-                && !suicide(bs, ai, aj, color)) {
-                /* Further require the move not to be suicide for the
-                 * opponent...
-                 */
-                if (!suicide(bs, ai, aj, OTHER_COLOR(color)))
-                    moves[num_moves++] = POS(ai, aj);
-                else {
-                    /* ...however, if the move captures at least one stone,
-                     * consider it anyway.
-                     */
-                    for (k = 0; k < 4; k++) {
-                        int bi = ai + deltai[k];
-                        int bj = aj + deltaj[k];
-                        if (ON_BOARD(bi, bj)
-                            && bs->board[POS(bi, bj)] == OTHER_COLOR(color)) {
-                            moves[num_moves++] = POS(ai, aj);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+    get_legal_moves(bs, color);
 
     /* Choose one of the considered moves randomly with uniform
      * distribution. (Strictly speaking the moves with smaller 1D
@@ -50,8 +20,11 @@ void generate_move(board_status *bs, int *i, int *j, intersection color)
      * chosen, but for all practical purposes we get a uniform
      * distribution.)
      */
-    if (num_moves > 0) {
-        move = moves[rand() % num_moves];
+    char s[10];
+    sprintf(s, "%d\n", bs->legal_moves_num);
+    debug_log(s);
+    if (bs->legal_moves_num > 0) {
+        move = bs->legal_moves[rand() % bs->legal_moves_num];
         *i = I(move);
         *j = J(move);
     } else {
@@ -59,6 +32,8 @@ void generate_move(board_status *bs, int *i, int *j, intersection color)
         *i = -1;
         *j = -1;
     }
+    sprintf(s, ">%d\n", color);
+    debug_log(s);
 }
 
 /* Put free placement handicap stones on the board. We do this simply
