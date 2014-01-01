@@ -28,10 +28,10 @@ void debug_log(char *s)
 
 static char color_to_char(intersection color) {
     if (color == BLACK)
-        return 'x';
+        return 'X';
     if (color == WHITE)
-        return 'o';
-    return ' ';
+        return 'O';
+    return '.';
 }
 
 void debug_log_board_status(board_status *bs) {
@@ -39,7 +39,7 @@ void debug_log_board_status(board_status *bs) {
     FILE *debug_file;
     debug_file = fopen("board.log", "a");
 
-    fprintf(debug_file, "  #");
+    fprintf(debug_file, " #");
     for (j = 0; j < board_size; j++)
         fprintf(debug_file, "%3d", j);
     fprintf(debug_file, "\n");
