@@ -41,12 +41,12 @@ void debug_log_board_status(board_status *bs) {
 
     fprintf(debug_file, " #");
     for (j = 0; j < board_size; j++)
-        fprintf(debug_file, "%3d", j);
+        fprintf(debug_file, "%2d", j);
     fprintf(debug_file, "\n");
     for (i = 0; i < board_size; i++) {
-        fprintf(debug_file, "%3d", i);
+        fprintf(debug_file, "%2d", i);
         for (j = 0; j < board_size; j++)
-            fprintf(debug_file, "%3c", color_to_char(bs->board[POS(i, j)]));
+            fprintf(debug_file, "%2c", color_to_char(bs->board[POS(i, j)]));
         fprintf(debug_file, "\n");
     }
     fclose(debug_file);
