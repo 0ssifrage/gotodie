@@ -1,3 +1,6 @@
+#ifndef _GOTODIE_H_
+#define _GOTODIE_H_
+
 #include "board.h"
 
 #define GOTODIE_NAME "GoToDie"
@@ -6,3 +9,6 @@
 void init_gotodie(void);
 void generate_move(board_status *bs, int *i, int *j, intersection color);
 void place_free_handicap(board_status *bs, int handicap);
+
+
+#endif
