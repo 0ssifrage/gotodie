@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 #include "gotodie.h"
-#include "board.h"
 
 void init_gotodie(void)
 {
-    clear_board();
+    clear_board(&main_board);
 }
 
 /* Generate a move. */
-void generate_move(int *i, int *j, intersection color)
+void generate_move(board_status *bs, int *i, int *j, intersection color)
 {
     int moves[MAX_BOARDSIZE];
     int num_moves = 0;
@@ -21,12 +20,12 @@ void generate_move(int *i, int *j, intersection color)
     for (ai = 0; ai < board_size; ai++)
         for (aj = 0; aj < board_size; aj++) {
             /* Consider moving at (ai, aj) if it is legal and not suicide. */
-            if (legal_move(ai, aj, color)
-                && !suicide(ai, aj, color)) {
+            if (legal_move(bs, ai, aj, color)
+                && !suicide(bs, ai, aj, color)) {
                 /* Further require the move not to be suicide for the
                  * opponent...
                  */
-                if (!suicide(ai, aj, OTHER_COLOR(color)))
+                if (!suicide(bs, ai, aj, OTHER_COLOR(color)))
                     moves[num_moves++] = POS(ai, aj);
                 else {
                     /* ...however, if the move captures at least one stone,
@@ -36,7 +35,7 @@ void generate_move(int *i, int *j, intersection color)
                         int bi = ai + deltai[k];
                         int bj = aj + deltaj[k];
                         if (ON_BOARD(bi, bj)
-                            && board[POS(bi, bj)] == OTHER_COLOR(color)) {
+                            && bs->board[POS(bi, bj)] == OTHER_COLOR(color)) {
                             moves[num_moves++] = POS(ai, aj);
                             break;
                         }
@@ -65,13 +64,13 @@ void generate_move(int *i, int *j, intersection color)
 /* Put free placement handicap stones on the board. We do this simply
  * by generating successive black moves.
  */
-void place_free_handicap(int handicap)
+void place_free_handicap(board_status *bs, int handicap)
 {
     int k;
     int i, j;
 
     for (k = 0; k < handicap; k++) {
-        generate_move(&i, &j, BLACK);
-        play_move(i, j, BLACK);
+        generate_move(bs, &i, &j, BLACK);
+        play_move(bs, i, j, BLACK);
     }
 }

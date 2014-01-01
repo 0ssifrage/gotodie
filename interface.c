@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include "gotodie.h"
-#include "board.h"
 #include "gtp.h"
 
 /* Forward declarations. */
@@ -131,7 +130,7 @@ static int gtp_boardsize(char *s)
 
 static int gtp_clear_board(char *s)
 {
-    clear_board();
+    clear_board(&main_board);
     return gtp_success("");
 }
 
@@ -150,7 +149,7 @@ static int place_handicap(char *s, int fixed)
     int m, n;
     int first_stone = 1;
 
-    if (!board_empty())
+    if (!board_empty(&main_board))
         return gtp_failure("board not empty");
 
     if (sscanf(s, "%d", &handicap) < 1)
@@ -163,14 +162,14 @@ static int place_handicap(char *s, int fixed)
         return gtp_failure("invalid handicap");
 
     if (fixed)
-        place_fixed_handicap(handicap);
+        place_fixed_handicap(&main_board, handicap);
     else
-        place_free_handicap(handicap);
+        place_free_handicap(&main_board, handicap);
 
     gtp_start_response(GTP_SUCCESS);
     for (m = 0; m < board_size; m++)
         for (n = 0; n < board_size; n++)
-            if (board[POS(m, n)] != EMPTY) {
+            if (main_board.board[POS(m, n)] != EMPTY) {
                 if (first_stone)
                     first_stone = 0;
                 else
@@ -196,28 +195,28 @@ static int gtp_set_free_handicap(char *s)
     int n;
     int handicap = 0;
 
-    if (!board_empty())
+    if (!board_empty(&main_board))
         return gtp_failure("board not empty");
 
     while ((n = gtp_decode_coord(s, &i, &j)) > 0) {
         s += n;
 
-        if (board[POS(i, j)] != EMPTY) {
-            clear_board();
+        if (main_board.board[POS(i, j)] != EMPTY) {
+            clear_board(&main_board);
             return gtp_failure("repeated vertex");
         }
 
-        play_move(i, j, BLACK);
+        play_move(&main_board, i, j, BLACK);
         handicap++;
     }
 
     if (sscanf(s, "%*s") != EOF) {
-        clear_board();
+        clear_board(&main_board);
         return gtp_failure("invalid coordinate");
     }
 
     if (handicap < 2 || handicap >= board_array_size) {
-        clear_board();
+        clear_board(&main_board);
         return gtp_failure("invalid handicap");
     }
 
@@ -232,10 +231,10 @@ static int gtp_play(char *s)
     if (!gtp_decode_move(s, &color, &i, &j))
         return gtp_failure("invalid color or coordinate");
 
-    if (!legal_move(i, j, color))
+    if (!legal_move(&main_board, i, j, color))
         return gtp_failure("illegal move");
 
-    play_move(i, j, color);
+    play_move(&main_board, i, j, color);
     return gtp_success("");
 }
 
@@ -247,8 +246,8 @@ static int gtp_genmove(char *s)
     if (!gtp_decode_color(s, &color))
         return gtp_failure("invalid color");
 
-    generate_move(&i, &j, color);
-    play_move(i, j, color);
+    generate_move(&main_board, &i, &j, color);
+    play_move(&main_board, i, j, color);
 
     gtp_start_response(GTP_SUCCESS);
     gtp_mprintf("%m", i, j);
@@ -263,15 +262,15 @@ static int gtp_final_score(char *s)
     float score = komi;
     int i, j;
 
-    compute_final_status();
+    compute_final_status(&main_board);
     for (i = 0; i < board_size; i++)
         for (j = 0; j < board_size; j++) {
-            int status = get_final_status(i, j);
+            int status = get_final_status(&main_board, i, j);
             if (status == BLACK_TERRITORY)
                 score--;
             else if (status == WHITE_TERRITORY)
                 score++;
-            else if ((status == ALIVE) ^ (board[POS(i, j)] == WHITE))
+            else if ((status == ALIVE) ^ (main_board.board[POS(i, j)] == WHITE))
                 score--;
             else
                 score++;
@@ -304,21 +303,21 @@ static int gtp_final_status_list(char *s)
     else
         return gtp_failure("invalid status");
 
-    compute_final_status();
+    compute_final_status(&main_board);
 
     gtp_start_response(GTP_SUCCESS);
 
     first_string = 1;
     for (i = 0; i < board_size; i++)
         for (j = 0; j < board_size; j++)
-            if (get_final_status(i, j) == status) {
+            if (get_final_status(&main_board, i, j) == status) {
                 int k;
                 int stonei[MAX_BOARDSIZE];
                 int stonej[MAX_BOARDSIZE];
-                int num_stones = get_string(i, j, stonei, stonej);
+                int num_stones = get_string(&main_board, i, j, stonei, stonej);
                 /* Clear the status so we don't find the string again. */
                 for (k = 0; k < num_stones; k++)
-                    set_final_status(stonei[k], stonej[k], UNKNOWN);
+                    set_final_status(&main_board, stonei[k], stonej[k], UNKNOWN);
 
                 if (first_string)
                     first_string = 0;
@@ -347,7 +346,7 @@ static int gtp_showboard(char *s)
         printf("\n%2d", board_size - i);
 
         for (j = 0; j < board_size; j++)
-            printf(" %c", symbols[board[POS(i, j)]]);
+            printf(" %c", symbols[main_board.board[POS(i, j)]]);
 
         printf(" %d", board_size - i);
     }
