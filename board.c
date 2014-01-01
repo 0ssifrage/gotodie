@@ -26,6 +26,7 @@ int father[MAX_BOARDSIZE];
 int strings[MAX_BOARDSIZE];
 intersection string_color[MAX_BOARDSIZE];
 int string_stones[MAX_BOARDSIZE];
+int approximate_liberty[MAX_BOARDSIZE];
 int num_of_strings;
 /* strings[string_index[get_father(pos)]] = get_father(pos) */
 int string_index[MAX_BOARDSIZE];
@@ -179,6 +180,7 @@ static void remove_string_from_strings(int fa)
         strings[str_idx] = strings[num_of_strings];
         string_color[str_idx] = string_color[num_of_strings];
         string_stones[str_idx] = string_stones[num_of_strings];
+        approximate_liberty[str_idx] = approximate_liberty[num_of_strings];
         string_index[strings[str_idx]] = str_idx;
     }
     num_of_strings--;
@@ -193,6 +195,22 @@ static int remove_string(int i, int j)
     int pos = POS(i, j);
     int fa = get_father(pos);
     int removed = 0;
+    int k, pos2, ai, aj, f2;
+
+    do {
+        for (k = 0; k < 4; k++) {
+            ai = i + deltai[k];
+            aj = j + deltaj[k];
+            pos2 = POS(ai, aj);
+            if (ON_BOARD(ai, aj) && IS_STONE(pos2)) {
+                f2 = get_father(pos2);
+                if (f2 != fa)
+                    approximate_liberty[string_index[f2]]++;
+            }
+        }
+    } while (pos != POS(i, j));
+
+    pos = POS(i, j);
     do {
         board[pos] = EMPTY;
         removed++;
@@ -227,8 +245,11 @@ static void union_string(int pos1, int pos2)
     int f1 = get_father(pos1);
     int f2 = get_father(pos2);
     if (f1 != f2) {
+        int i1 = string_index[f1];
+        int i2 = string_index[f2];
         father[f2] = f1;
-        string_stones[string_index[f1]] += string_stones[string_index[f2]];
+        string_stones[i1] += string_stones[i2];
+        approximate_liberty[i1] += approximate_liberty[i2];
         remove_string_from_strings(f2);
     }
 }
@@ -288,7 +309,20 @@ void play_move(int i, int j, intersection color)
     string_index[pos] = num_of_strings;
     strings[num_of_strings] = pos;
     string_stones[num_of_strings] = 1;
+    approximate_liberty[num_of_strings] = 0;
     string_color[num_of_strings] = color;
+
+    for (k = 0; k < 4; k++) {
+        int ai = i + deltai[k];
+        int aj = j + deltaj[k];
+        int pos2 = POS(ai, aj);
+        if (ON_BOARD(ai, aj)) {
+            if (IS_STONE(pos2))
+                approximate_liberty[string_index[get_father(pos2)]]--;
+            if (board[pos2] == EMPTY)
+                approximate_liberty[num_of_strings]++;
+        }
+    }
 
     /* If we have friendly neighbor strings we need to link the strings
      * together.
@@ -297,6 +331,7 @@ void play_move(int i, int j, intersection color)
         int ai = i + deltai[k];
         int aj = j + deltaj[k];
         int pos2 = POS(ai, aj);
+
         /* Make sure that the stones are not already linked together. This
          * may happen if the same string neighbors the new stone in more
          * than one direction.
@@ -329,6 +364,24 @@ void play_move(int i, int j, intersection color)
             ko_j = aj;
         }
     }
+
+/*
+    FILE *debug_file;
+    debug_file = fopen("debug.log", "a");
+    fprintf(debug_file, "---\n");
+    int si, sfa, spos;
+    for (si = 1; si <= num_of_strings; si++) {
+        fprintf(debug_file, "%2d. color: %d, stones: %d, approximate_liberty: %d\n", si, string_color[si], string_stones[si], approximate_liberty[si]);
+        sfa = strings[si];
+        spos = sfa;
+        do {
+            fprintf(debug_file, " (%d, %d)", I(spos), J(spos));
+            spos = next_stone[spos];
+        } while (spos != sfa);
+        fprintf(debug_file, "\n");
+    }
+    fclose(debug_file);
+*/
 }
 
 /* Set a final status value for an entire string. */
