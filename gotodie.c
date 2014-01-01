@@ -75,8 +75,6 @@ int eat_more(board_status *bs, intersection color)
     }
 
     return POS(-1, -1);
-=======
->>>>>>> basefunc_from_brown
 }
 
 /* Put free placement handicap stones on the board. We do this simply
