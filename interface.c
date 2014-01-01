@@ -240,13 +240,15 @@ static int gtp_play(char *s)
 
 static int gtp_genmove(char *s)
 {
-    int i, j;
+    int i, j, pos;
     int color = EMPTY;
 
     if (!gtp_decode_color(s, &color))
         return gtp_failure("invalid color");
 
-    generate_move(&main_board, &i, &j, color);
+    pos = generate_move(&main_board, color);
+    i = I(pos);
+    j = J(pos);
     play_move(&main_board, i, j, color);
 
     gtp_start_response(GTP_SUCCESS);

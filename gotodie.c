@@ -9,7 +9,7 @@ void init_gotodie(void)
 }
 
 /* Generate a move. */
-void generate_move(board_status *bs, int *i, int *j, intersection color)
+int generate_move(board_status *bs, intersection color)
 {
     int moves[MAX_BOARDSIZE];
     int num_moves = 0;
@@ -53,13 +53,58 @@ void generate_move(board_status *bs, int *i, int *j, intersection color)
      */
     if (num_moves > 0) {
         move = moves[rand() % num_moves];
-        *i = I(move);
-        *j = J(move);
+        return move;
     } else {
         /* But pass if no move was considered. */
-        *i = -1;
-        *j = -1;
+        return -14;
     }
+}
+
+int eat_more(board_status *bs, intersection color)
+{
+    intersection other_color = OTHER_COLOR(color);
+    int flag[board_array_size];
+    int other_color_cnt = 0;
+    int si;
+    float max_value, tmp;
+    int min_pos;
+    int k, spos, bi, bj;
+    for (si = 1; si <= bs->num_of_strings; si++) {
+        if (bs->string_color[si] == other_color) {
+            other_color_cnt++;
+            flag[si] = 1;
+        }
+    }
+
+    while (other_color_cnt > 0) {
+        max_value = -board_array_size;
+        min_pos = POS(-1, -1);
+        for (si = 1; si <= bs->num_of_strings; si++) {
+            if (bs->string_color[si] == other_color && flag[si])
+                tmp = bs->string_stones[si] * 10 - bs->approximate_liberty[si];
+                // tmp = string_stones[si];
+                if (tmp > max_value) {
+                    max_value = tmp;
+                    min_pos = bs->strings[si];
+                }
+        }
+        spos = min_pos;
+        do {
+            for (k = 0; k < 4; k++) {
+                bi = I(spos) + deltai[k];
+                bj = J(spos) + deltaj[k];
+                if (ON_BOARD(bi, bj) && legal_move(bs, bi, bj, color)
+                    && !suicide(bs, bi, bj, color)) {
+                    return POS(bi, bj);
+                }
+            }
+            spos = bs->next_stone[spos];
+        } while (spos != min_pos);
+        other_color_cnt--;
+        flag[si] = 0;
+    }
+
+    return POS(-1, -1);
 }
 
 /* Put free placement handicap stones on the board. We do this simply
@@ -68,10 +113,10 @@ void generate_move(board_status *bs, int *i, int *j, intersection color)
 void place_free_handicap(board_status *bs, int handicap)
 {
     int k;
-    int i, j;
+    int i, j, pos;
 
     for (k = 0; k < handicap; k++) {
-        generate_move(bs, &i, &j, BLACK);
-        play_move(bs, i, j, BLACK);
+        pos = generate_move(bs, BLACK);
+        play_move(bs, I(pos), J(pos), BLACK);
     }
 }
