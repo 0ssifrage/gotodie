@@ -1,3 +1,6 @@
+#ifndef _BOARD_H_
+#define _BOARD_H_
+
 #define MIN_BOARD 13
 #define MAX_BOARD 13
 #define MAX_BOARDSIZE 169
@@ -72,3 +75,6 @@ int get_final_status(board_status *bs, int i, int j);
 void set_final_status(board_status *bs, int i, int j, int status);
 int valid_fixed_handicap(int handicap);
 void place_fixed_handicap(board_status *bs, int handicap);
+
+
+#endif
