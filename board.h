@@ -59,6 +59,7 @@ extern int deltaj[4];
 
 
 void debug_log(char *s);
+void debug_log_board_status(board_status *bs);
 void clear_board(board_status *bs);
 int board_empty(board_status *bs);
 int is_stone(board_status *bs, int pos);
