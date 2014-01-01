@@ -39,6 +39,9 @@ typedef struct sbs {
     /* strings[string_index[get_father(pos)]] = get_father(pos) */
     int string_index[MAX_BOARDSIZE];
 
+    int legal_moves[MAX_BOARDSIZE];
+    int legal_moves_num;
+
     /* Storage for final status computations. */
     int final_status[MAX_BOARDSIZE];
 } board_status;
@@ -69,6 +72,7 @@ int is_stone(board_status *bs, int pos);
 int get_string(board_status *bs, int i, int j, int *stonei, int *stonej);
 int legal_move(board_status *bs, int i, int j, intersection color);
 int suicide(board_status *bs, int i, int j, intersection color);
+void get_legal_moves(board_status *bs, intersection color);
 void play_move(board_status *bs, int i, int j, intersection color);
 void compute_final_status(board_status *bs);
 int get_final_status(board_status *bs, int i, int j);
