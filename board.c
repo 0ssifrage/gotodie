@@ -26,6 +26,24 @@ void debug_log(char *s)
     fclose(debug_file);
 }
 
+void debug_log_board_status(board_status *bs) {
+    int i, j;
+    FILE *debug_file;
+    debug_file = fopen("board.log", "a");
+
+    fprintf(debug_file, " # ");
+    for (j = 0; j < board_size; j++)
+        fprintf(debug_file, "%3d", j);
+    fprintf(debug_file, "\n");
+    for (i = 0; i < board_size; i++) {
+        fprintf(debug_file, "%3d", i);
+        for (j = 0; j < board_size; j++)
+            fprintf(debug_file, "%3d", bs->board[POS(i, j)]);
+        fprintf(debug_file, "\n");
+    }
+    fclose(debug_file);
+}
+
 void clear_board(board_status *bs)
 {
     int pos;
