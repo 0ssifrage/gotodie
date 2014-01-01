@@ -49,6 +49,7 @@ void debug_log_board_status(board_status *bs) {
             fprintf(debug_file, "%2c", color_to_char(bs->board[POS(i, j)]));
         fprintf(debug_file, "\n");
     }
+    fprintf(debug_file, "\n");
     fclose(debug_file);
 }
 
