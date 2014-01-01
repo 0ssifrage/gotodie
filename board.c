@@ -178,6 +178,41 @@ int suicide(board_status *bs, int i, int j, intersection color)
     return 1;
 }
 
+void get_legal_moves(board_status *bs, intersection color)
+{
+    int ai, aj, bi, bj, k;
+    int num_moves = 0;
+
+    memset(bs->legal_moves, 0, sizeof(bs->legal_moves));
+    for (ai = 0; ai < board_size; ai++)
+        for (aj = 0; aj < board_size; aj++) {
+            /* Consider moving at (ai, aj) if it is legal and not suicide. */
+            if (legal_move(bs, ai, aj, color)
+                && !suicide(bs, ai, aj, color)) {
+                /* Further require the move not to be suicide for the
+                 * opponent...
+                 */
+                if (!suicide(bs, ai, aj, OTHER_COLOR(color)))
+                    bs->legal_moves[num_moves++] = POS(ai, aj);
+                else {
+                    /* ...however, if the move captures at least one stone,
+                     * consider it anyway.
+                     */
+                    for (k = 0; k < 4; k++) {
+                        bi = ai + deltai[k];
+                        bj = aj + deltaj[k];
+                        if (ON_BOARD(bi, bj)
+                            && bs->board[POS(bi, bj)] == OTHER_COLOR(color)) {
+                            bs->legal_moves[num_moves++] = POS(ai, aj);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    bs->legal_moves_num = num_moves;
+}
+
 static int get_father(board_status *bs, int pos)
 {
     if (bs->father[pos] == pos)
