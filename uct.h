@@ -1,3 +1,3 @@
-#include "gotodie.h"
+#include "board.h"
 
 double simulate_game(board_state *bs);

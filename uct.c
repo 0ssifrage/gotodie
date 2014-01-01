@@ -1,5 +1,6 @@
-#include "gotodie.h"
 #include "uct.h"
+#include "gotodie.h"
+
 
 double simulate_game(board_state *bs, intersection color) {
     int pass[3];
@@ -15,4 +16,5 @@ double simulate_game(board_state *bs, intersection color) {
         play_move(i, j, color_now);
         color_now = OTHER_COLOR(color_now);
     }
+    debug_log_board_status(bs);
 }
