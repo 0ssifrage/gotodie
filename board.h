@@ -73,6 +73,7 @@ void play_move(board_status *bs, int i, int j, intersection color);
 void compute_final_status(board_status *bs);
 int get_final_status(board_status *bs, int i, int j);
 void set_final_status(board_status *bs, int i, int j, int status);
+double get_score(board_status *bs);
 int valid_fixed_handicap(int handicap);
 void place_fixed_handicap(board_status *bs, int handicap);
 

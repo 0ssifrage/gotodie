@@ -463,6 +463,29 @@ void set_final_status(board_status *bs, int i, int j, int status)
     bs->final_status[POS(i, j)] = status;
 }
 
+double get_score(board_status *bs)
+{
+    double score = komi;
+    int i, j;
+
+    compute_final_status(bs);
+    for (i = 0; i < board_size; i++)
+        for (j = 0; j < board_size; j++) {
+            int status = get_final_status(bs, i, j);
+            if (status == BLACK_TERRITORY)
+                score--;
+            else if (status == WHITE_TERRITORY)
+                score++;
+            else if ((status == ALIVE) ^ (bs->board[POS(i, j)] == WHITE))
+                score--;
+            else
+                score++;
+        }
+
+    if (score > 0.0)
+        return score;
+}
+
 /* Valid number of stones for fixed placement handicaps. These are
  * compatible with the GTP fixed handicap placement rules.
  */
