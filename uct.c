@@ -26,8 +26,11 @@ double simulate_game(board_status *bs, intersection color)
     }
     // debug_log_board_status(bs);
     score = get_score(bs);
-
-    return (score>0? 1: 0);
+    if (score > 0 && color == WHITE)
+        return 1;
+    if (score < 0 && color == BLACK)
+        return 1;
+    return 0;
 }
 
 static void init_uct_node(int wins, int visits, uct_node *un)
