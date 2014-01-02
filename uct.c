@@ -19,7 +19,7 @@ double simulate_game(board_status *bs, intersection color)
     pass[color] = 0;
     color_now = color;
     while (!(pass[BLACK] && pass[WHITE]) && step <= 200) {
-        pos = generate_move(bs, color_now);
+        pos = generate_random_move(bs, color_now);
         pass[color_now] = (pos == -14);
         play_move(bs, I(pos), J(pos), color_now);
         color_now = OTHER_COLOR(color_now);
@@ -176,5 +176,7 @@ int uct_search(board_status *bs, intersection ucolor)
     }
     best_child = get_best_child(uct_root);
     free_uct_tree(uct_root);
+    if (best_child == NULL)
+        return POS(-1,-1);
     return best_child->pos;
 }

@@ -2,14 +2,15 @@
 #include <string.h>
 #include <time.h>
 #include "gotodie.h"
+#include "uct.h"
 
 void init_gotodie(void)
 {
     clear_board(&main_board);
 }
 
-/* Generate a move. */
-int generate_move(board_status *bs, intersection color)
+/* Generate a random move. */
+int generate_random_move(board_status *bs, intersection color)
 {
     int move;
 
@@ -28,6 +29,14 @@ int generate_move(board_status *bs, intersection color)
         /* But pass if no move was considered. */
         return -14;
     }
+}
+
+/* Generate a move. */
+int generate_move(board_status *bs, intersection color)
+{
+    int pos;
+    pos = uct_search(bs, color);
+    return pos;
 }
 
 int eat_more(board_status *bs, intersection color)
