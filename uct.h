@@ -4,13 +4,15 @@
 #include "board.h"
 
 #define MAX_SIM_NUM 100
+#define MAX_VISITS 10
+/* 0.44 = sqrt(1/5) */
+#define UCTK 0.44
 
 
 typedef struct node {
-    int wins;
+    double wins;
     int visits;
     int pos;
-    double uct_value;
     struct node *child, *sibling;
 } uct_node;
 
