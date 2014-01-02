@@ -111,6 +111,7 @@ static double simulate(board_status *bs, intersection color, uct_node *un)
 {
     double res;
     uct_node *next;
+    int i, j;
 
     if (un->child == NULL && un->visits < MAX_VISITS)
         res = simulate_game(bs, color);
@@ -118,8 +119,10 @@ static double simulate(board_status *bs, intersection color, uct_node *un)
         if (un->child == NULL)
             create_uct_children(bs, color, un);
         next = uct_select(un);
-        if (next == NULL)
-            return -1;
+        if (next == NULL) {
+            next = (uct_node *)malloc(sizeof(uct_node));
+            init_uct_node(-1, -1, next);
+        }
         play_move(bs, I(next->pos), J(next->pos), color);
         color = OTHER_COLOR(color);
         res = simulate(bs, color, next);
@@ -153,22 +156,13 @@ int uct_search(board_status *bs, intersection ucolor)
     uct_node *best_child;
     board_status uct_board;
     intersection color;
-    int i, node_num;
+    int i, node_num, pos;
 
     memcpy(&uct_board, bs, sizeof(uct_board));
     color = ucolor;
     uct_root = (uct_node *)malloc(sizeof(uct_node));
     init_uct_node(-1, -1, uct_root);
     node_num = create_uct_children(&uct_board, color, uct_root);
-
-    // uct_node *tmp;
-    // tmp = uct_root->child;
-    // i = 0;
-    // while (tmp != NULL) {
-    //     i++;
-    //     printf("%d\n", tmp->pos);
-    //     tmp = tmp->sibling;
-    // }
 
     i = 0;
     while (i < MAX_SIM_NUM) {
@@ -178,8 +172,12 @@ int uct_search(board_status *bs, intersection ucolor)
         color = ucolor;
     }
     best_child = get_best_child(uct_root);
-    free_uct_tree(uct_root);
+
     if (best_child == NULL)
-        return POS(-1,-1);
-    return best_child->pos;
+        pos = POS(-1,-1);
+    else
+        pos = best_child->pos;
+
+    free_uct_tree(uct_root);
+    return pos;
 }
