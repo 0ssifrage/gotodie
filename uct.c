@@ -26,11 +26,12 @@ double simulate_game(board_status *bs, intersection color)
     }
     // debug_log_board_status(bs);
     score = get_score(bs);
+    // score > 0 for white wins
     if (score > 0 && color == WHITE)
-        return 1;
+        return 0;
     if (score < 0 && color == BLACK)
-        return 1;
-    return 0;
+        return 0;
+    return 1;
 }
 
 static void init_uct_node(int wins, int visits, uct_node *un)
@@ -113,9 +114,11 @@ static double simulate(board_status *bs, intersection color, uct_node *un)
     uct_node *next;
     int i, j;
 
-    if (un->child == NULL && un->visits < MAX_VISITS)
-        res = simulate_game(bs, color);
-    else {
+    if (un->child == NULL && un->visits < MAX_VISITS) {
+        play_move(bs, I(un->pos), J(un->pos), color);
+        res = simulate_game(bs, OTHER_COLOR(color));
+    } else {
+        color = OTHER_COLOR(color);
         if (un->child == NULL)
             create_uct_children(bs, color, un);
         next = uct_select(un);
@@ -123,13 +126,12 @@ static double simulate(board_status *bs, intersection color, uct_node *un)
             next = (uct_node *)malloc(sizeof(uct_node));
             init_uct_node(-1, -1, next);
         }
-        play_move(bs, I(next->pos), J(next->pos), color);
-        color = OTHER_COLOR(color);
+
         res = simulate(bs, color, next);
         res = 1 - res;
     }
 
-    update_node(1 - res, un);
+    update_node(res, un);
     return res;
 }
 

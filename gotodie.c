@@ -188,17 +188,17 @@ static int pattern(board_status *bs, intersection color)
 int generate_random_move(board_status *bs, intersection color)
 {
     int move, pos;
-    pos = save_stone(bs, color);
-    if (pos != -1)
-        return pos;
+    // pos = save_stone(bs, color);
+    // if (pos != -1)
+    //     return pos;
 
-    pos = pattern(bs, color);
-    if (pos != -1)
-        return pos;
+    // pos = pattern(bs, color);
+    // if (pos != -1)
+    //     return pos;
 
-    pos = capture_stone(bs, color);
-    if (pos != -1)
-        return pos;
+    // pos = capture_stone(bs, color);
+    // if (pos != -1)
+    //     return pos;
 
     get_legal_moves(bs, color);
 
