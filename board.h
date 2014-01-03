@@ -64,6 +64,7 @@ extern int deltaj[4];
     ((i) >= 0 && (i) < board_size && (j) >= 0 && (j) < board_size)
 
 
+void debug_log_int(int i);
 void debug_log(char *s);
 void debug_log_board_status(board_status *bs);
 void clear_board(board_status *bs);
@@ -73,6 +74,7 @@ int get_string(board_status *bs, int i, int j, int *stonei, int *stonej);
 int legal_move(board_status *bs, int i, int j, intersection color);
 int suicide(board_status *bs, int i, int j, intersection color);
 void get_legal_moves(board_status *bs, intersection color);
+int get_father(board_status *bs, int pos);
 void play_move(board_status *bs, int i, int j, intersection color);
 void compute_final_status(board_status *bs);
 int get_final_status(board_status *bs, int i, int j);

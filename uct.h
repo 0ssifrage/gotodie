@@ -3,7 +3,7 @@
 
 #include "board.h"
 
-#define MAX_SIM_NUM 2000
+#define MAX_SIM_NUM 5000
 #define MAX_VISITS 10
 /* 0.44 = sqrt(1/5) */
 #define UCTK 0.44

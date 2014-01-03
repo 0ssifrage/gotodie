@@ -18,6 +18,14 @@ board_status main_board;
 int deltai[4] = {-1, 1, 0, 0};
 int deltaj[4] = {0, 0, -1, 1};
 
+void debug_log_int(int i)
+{
+    FILE *debug_file;
+    debug_file = fopen("debug.log", "a");
+    fprintf(debug_file, "int :%d\n", i);
+    fclose(debug_file);
+}
+
 void debug_log(char *s)
 {
     FILE *debug_file;
@@ -179,6 +187,35 @@ int suicide(board_status *bs, int i, int j, intersection color)
     return 1;
 }
 
+int is_legal_move(board_status *bs, intersection color, int pos)
+{
+    int ai, aj, bi, bj, k;
+    ai = I(pos);
+    aj = J(pos);
+    if (legal_move(bs, ai, aj, color)
+        && !suicide(bs, ai, aj, color)) {
+        /* Further require the move not to be suicide for the
+         * opponent...
+         */
+        if (!suicide(bs, ai, aj, OTHER_COLOR(color)))
+            return 1;
+        else {
+            /* ...however, if the move captures at least one stone,
+             * consider it anyway.
+             */
+            for (k = 0; k < 4; k++) {
+                bi = ai + deltai[k];
+                bj = aj + deltaj[k];
+                if (ON_BOARD(bi, bj)
+                    && bs->board[POS(bi, bj)] == OTHER_COLOR(color)) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 void get_legal_moves(board_status *bs, intersection color)
 {
     int ai, aj, bi, bj, k;
@@ -214,7 +251,7 @@ void get_legal_moves(board_status *bs, intersection color)
     bs->legal_moves_num = num_moves;
 }
 
-static int get_father(board_status *bs, int pos)
+int get_father(board_status *bs, int pos)
 {
     if (bs->father[pos] == pos)
         return pos;
