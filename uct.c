@@ -58,7 +58,7 @@ static int create_uct_children(board_status *bs, intersection color,
     int mi;
     uct_node *now, *new_node;
 
-    get_legal_moves(bs, color);
+    get_legal_moves2(bs, color);
 
     if (bs->legal_moves_num == 0)
         return 0;

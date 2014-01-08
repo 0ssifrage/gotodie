@@ -26,7 +26,7 @@ typedef struct sbs {
     intersection board[MAX_BOARDSIZE];
     int last_move_pos;
     /* Point which would be an illegal ko recapture. */
-    int ko_i, ko_j;
+    int ko_i, ko_j, ko_pos;
     /* Stones are linked together in a circular list for each string. */
     int next_stone[MAX_BOARDSIZE];
     int father[MAX_BOARDSIZE];
@@ -42,8 +42,14 @@ typedef struct sbs {
     int legal_moves[MAX_BOARDSIZE];
     int legal_moves_num;
 
+    int legal_moves2[MAX_BOARDSIZE];
+    int legal_moves_num2;
+
+    int legal[2][MAX_BOARDSIZE];
+
     /* Storage for final status computations. */
     int final_status[MAX_BOARDSIZE];
+    int update_pos[MAX_BOARDSIZE];
 } board_status;
 
 extern board_status main_board;
@@ -72,6 +78,7 @@ int board_empty(board_status *bs);
 int is_stone(board_status *bs, int pos);
 int get_string(board_status *bs, int i, int j, int *stonei, int *stonej);
 int legal_move(board_status *bs, int i, int j, intersection color);
+int only_lib(board_status *bs, int string_idx);
 int suicide(board_status *bs, int i, int j, intersection color);
 void get_legal_moves(board_status *bs, intersection color);
 int get_father(board_status *bs, int pos);

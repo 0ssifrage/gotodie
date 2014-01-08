@@ -45,7 +45,7 @@ static char color_to_char(intersection color) {
 void debug_log_board_status(board_status *bs) {
     int i, j;
     FILE *debug_file;
-    debug_file = fopen("board.log", "a");
+    debug_file = fopen("debug.log", "a");
 
     fprintf(debug_file, " #");
     for (j = 0; j < board_size; j++)
@@ -69,6 +69,7 @@ void clear_board(board_status *bs)
     for (pos = 0; pos < board_array_size; pos++)
         bs->father[pos] = -1;
     bs->last_move_pos = -1;
+    bs->ko_pos = POS(-1, -1);
 }
 
 int board_empty(board_status *bs)
@@ -176,6 +177,42 @@ static int provides_liberty(
     return !has_additional_liberty(bs, ai, aj, i, j);
 }
 
+/* -1 for more then 1 lib
+ * else for the position of the only liberty
+ */
+int only_lib(board_status *bs, int string_idx)
+{
+    int fpos, pos, lpos = -1;
+    int i, ai, aj, bi, bj;
+    int appr_lib, find_lib = 0;
+    appr_lib = bs->approximate_liberty[string_idx];
+    if (appr_lib > 4)
+        return -1;
+    fpos = bs->strings[string_idx];
+    pos = fpos;
+    do {
+        ai = I(pos);
+        aj = J(pos);
+        for (i = 0; i < 4; i++) {
+            bi = ai + deltai[i];
+            bj = aj + deltaj[i];
+            if (ON_BOARD(bi, bj) && bs->board[POS(bi, bj)] == EMPTY) {
+                find_lib++;
+                if (lpos == -1)
+                    lpos = POS(bi, bj);
+                else
+                    if (lpos != POS(bi, bj))
+                        return -1;
+                if (find_lib == appr_lib)
+                    return lpos;
+            }
+        }
+        pos = bs->next_stone[pos];
+    } while (pos != fpos);
+
+    return lpos;
+}
+
 /* Is a move at (i, j) suicide for color? */
 int suicide(board_status *bs, int i, int j, intersection color)
 {
@@ -216,6 +253,15 @@ int is_legal_move(board_status *bs, intersection color, int pos)
     return 0;
 }
 
+void get_legal_moves2(board_status *bs, intersection color) {
+    int num_moves = 0, i;
+    for (i = 0; i < board_array_size; i++) {
+        if (!bs->legal[color-1][i])
+            bs->legal_moves[num_moves++] = i;
+    }
+    bs->legal_moves_num = num_moves;
+}
+
 void get_legal_moves(board_status *bs, intersection color)
 {
     int ai, aj, bi, bj, k;
@@ -251,6 +297,39 @@ void get_legal_moves(board_status *bs, intersection color)
     bs->legal_moves_num = num_moves;
 }
 
+void update_string_legal1(board_status *bs, int si)
+{
+    int lpos = only_lib(bs, si);
+    intersection color = bs->string_color[si];
+    if (lpos != -1) {
+        bs->update_pos[0]++;
+        bs->update_pos[bs->update_pos[0]] = lpos;
+    }
+}
+
+void update_string_legal2(board_status *bs, int si)
+{
+    int lpos = only_lib(bs, si);
+    if (lpos != -1) {
+        intersection color = bs->string_color[si];
+        // bs->legal[OTHER_COLOR(color)-1][lpos] = 0;
+        // int k, bi, bj, ai = I(lpos), aj = J(lpos);
+        // for (k = 0; k < 4; k++) {
+        //     bi = ai + deltai[k];
+        //     bj = aj + deltaj[k];
+        //     if (ON_BOARD(bi, bj) && bs->board[POS(bi, bj)] == OTHER_COLOR(color)) {
+        //         if (lpos == only_lib(bs, bs->string_index[get_father(bs, POS(bi, bj))]))
+        //             bs->legal[color-1][lpos] = 0;
+        //             return;
+        //     }
+        // }
+        // bs->legal[color-1][lpos] = 1;
+        bs->legal[color-1][lpos] = 1 - is_legal_move(bs, color, lpos);
+        bs->legal[OTHER_COLOR(color)-1][lpos] = 1 - is_legal_move(bs, OTHER_COLOR(color), lpos);
+    }
+}
+
+
 int get_father(board_status *bs, int pos)
 {
     if (bs->father[pos] == pos)
@@ -278,22 +357,39 @@ static void remove_string_from_strings(board_status *bs, int fa)
  */
 static int remove_string(board_status *bs, int i, int j)
 {
-    int pos = POS(i, j);
+    int pos = POS(i, j), lpos;
     int fa = get_father(bs, pos);
     int removed = 0;
     int k, pos2, ai, aj, f2;
+    intersection color = bs->board[pos];
 
+    bs->update_pos[0] = 0;
+    pos = POS(i, j);
     do {
         for (k = 0; k < 4; k++) {
-            ai = i + deltai[k];
-            aj = j + deltaj[k];
+            ai = I(pos) + deltai[k];
+            aj = J(pos) + deltaj[k];
             pos2 = POS(ai, aj);
-            if (ON_BOARD(ai, aj) && is_stone(bs, pos2)) {
+            if (ON_BOARD(ai, aj) && bs->board[pos2] == OTHER_COLOR(color)) {
                 f2 = get_father(bs, pos2);
-                if (f2 != fa)
-                    bs->approximate_liberty[bs->string_index[f2]]++;
+                update_string_legal1(bs, bs->string_index[f2]);
             }
         }
+        pos = bs->next_stone[pos];
+    } while (pos != POS(i, j));
+
+    pos = POS(i, j);
+    do {
+        for (k = 0; k < 4; k++) {
+            ai = I(pos) + deltai[k];
+            aj = J(pos) + deltaj[k];
+            pos2 = POS(ai, aj);
+            if (ON_BOARD(ai, aj) && bs->board[pos2] == OTHER_COLOR(color)) {
+                f2 = get_father(bs, pos2);
+                bs->approximate_liberty[bs->string_index[f2]]++;
+            }
+        }
+        pos = bs->next_stone[pos];
     } while (pos != POS(i, j));
 
     pos = POS(i, j);
@@ -304,7 +400,22 @@ static int remove_string(board_status *bs, int i, int j)
         bs->father[pos] = -1;
     } while (pos != POS(i, j));
 
+    pos = POS(i, j);
+    do {
+        bs->legal[color-1][pos] = 1 - is_legal_move(bs, color, pos);
+        bs->legal[OTHER_COLOR(color)-1][pos] = 1 - is_legal_move(bs, OTHER_COLOR(color), pos);
+        pos = bs->next_stone[pos];
+    } while (pos != POS(i, j));
+
     remove_string_from_strings(bs, fa);
+
+    for (k = 1; k <= bs->update_pos[0]; k++) {
+        lpos = bs->update_pos[k];
+        if (bs->string_stones[bs->string_index[fa]] == 8 && lpos == POS(2, 7))
+            debug_log_int(5555);
+        bs->legal[color-1][lpos] = 1-is_legal_move(bs, color, lpos);
+        bs->legal[OTHER_COLOR(color)-1][lpos] = 1-is_legal_move(bs, OTHER_COLOR(color), lpos);
+    }
 
     return removed;
 }
@@ -343,7 +454,7 @@ void play_move(board_status *bs, int i, int j, intersection color)
 {
     int pos = POS(i, j);
     int captured_stones = 0;
-    int k;
+    int k, ko_pos = POS(bs->ko_i, bs->ko_j);
 
     /* Reset the ko point. */
     bs->ko_i = -1;
@@ -392,6 +503,9 @@ void play_move(board_status *bs, int i, int j, intersection color)
     bs->approximate_liberty[bs->num_of_strings] = 0;
     bs->string_color[bs->num_of_strings] = color;
 
+    bs->legal[color-1][pos] = 1;
+    bs->legal[OTHER_COLOR(color)-1][pos] = 1;
+
     for (k = 0; k < 4; k++) {
         int ai = i + deltai[k];
         int aj = j + deltaj[k];
@@ -422,6 +536,22 @@ void play_move(board_status *bs, int i, int j, intersection color)
         }
     }
 
+    update_string_legal2(bs, bs->string_index[get_father(bs, pos)]);
+    for (k = 0; k < 4; k++)
+    {
+        int ai = i + deltai[k];
+        int aj = j + deltaj[k];
+        int pos2 = POS(ai, aj);
+
+        if (ON_BOARD(ai, aj)) {
+            if (bs->board[pos2] == OTHER_COLOR(color))
+                update_string_legal2(bs, bs->string_index[get_father(bs, pos2)]);
+            else if (bs->board[pos2] == EMPTY) {
+                bs->legal[color-1][pos2] = 1-is_legal_move(bs, color, pos2);
+                bs->legal[OTHER_COLOR(color)-1][pos2] = 1-is_legal_move(bs, OTHER_COLOR(color), pos2);
+            }
+        }
+    }
     /* If we have captured exactly one stone and the new string is a
      * single stone it may have been a ko capture.
      */
@@ -440,8 +570,11 @@ void play_move(board_status *bs, int i, int j, intersection color)
         }
 
         if (!has_additional_liberty(bs, i, j, ai, aj)) {
+
             bs->ko_i = ai;
             bs->ko_j = aj;
+            bs->ko_pos = POS(bs->ko_i, bs->ko_j);
+            bs->legal[OTHER_COLOR(color)-1][POS(ai, aj)] = 1;
         }
     }
 }

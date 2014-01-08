@@ -9,42 +9,6 @@ void init_gotodie(void)
     clear_board(&main_board);
 }
 
-/* -1 for more then 1 lib
- * else for the position of the only liberty
- */
-static int only_lib(board_status *bs, int string_idx)
-{
-    int fpos, pos, lpos = -1;
-    int i, ai, aj, bi, bj;
-    int appr_lib, find_lib = 0;
-    appr_lib = bs->approximate_liberty[string_idx];
-    if (appr_lib > 4)
-        return -1;
-    fpos = bs->strings[string_idx];
-    pos = fpos;
-    do {
-        ai = I(pos);
-        aj = J(pos);
-        for (i = 0; i < 4; i++) {
-            bi = ai + deltai[i];
-            bj = aj + deltaj[i];
-            if (ON_BOARD(bi, bj) && bs->board[POS(bi, bj)] == EMPTY) {
-                find_lib++;
-                if (lpos == -1)
-                    lpos = POS(bi, bj);
-                else
-                    if (lpos != POS(bi, bj))
-                        return -1;
-                if (find_lib == appr_lib)
-                    return lpos;
-            }
-        }
-        pos = bs->next_stone[pos];
-    } while (pos != fpos);
-
-    return lpos;
-}
-
 /* -1 for there is no stone to save */
 static int save_stone(board_status *bs, intersection color)
 {
@@ -200,7 +164,55 @@ int generate_random_move(board_status *bs, intersection color)
     // if (pos != -1)
     //     return pos;
 
-    get_legal_moves(bs, color);
+    if (bs->ko_pos != POS(-1, -1)) {
+        bs->legal[color-1][bs->ko_pos] = 1-is_legal_move(bs, color, bs->ko_pos);
+        bs->legal[OTHER_COLOR(color)-1][bs->ko_pos] = 1-is_legal_move(bs, OTHER_COLOR(color), bs->ko_pos);;
+    }
+    get_legal_moves2(bs, color);
+
+
+
+    // int i, ss=0;
+    // // debug_log_board_status(bs);
+    // for (i = 0; i < bs->legal_moves_num; i++) {
+    //     if (bs->legal[color-1][bs->legal_moves[i]] != 0) {
+    //         debug_log_board_status(bs);
+    //         debug_log_int(color);
+    //         debug_log_int(I(bs->legal_moves[i]));
+    //         debug_log_int(J(bs->legal_moves[i]));
+    //     }
+    // }
+    // for (i = 0; i < board_array_size; i++) {
+    //     ss += 1 - bs->legal[color-1][i];
+    // }
+    // if (ss != bs->legal_moves_num) {
+    //     debug_log_board_status(bs);
+    //     debug_log_int(color);
+    //     int ii, j;
+    //     FILE *debug_file;
+    //     debug_file = fopen("debug.log", "a");
+
+    //     fprintf(debug_file, " #");
+    //     for (j = 0; j < board_size; j++)
+    //         fprintf(debug_file, "%2d", j);
+    //     fprintf(debug_file, "\n");
+    //     for (ii = 0; ii < board_size; ii++) {
+    //         fprintf(debug_file, "%2d", ii);
+    //         for (j = 0; j < board_size; j++)
+    //             if (!bs->legal[color-1][POS(ii, j)])
+    //                 fprintf(debug_file, "%2c", 'x');
+    //             else
+    //                 fprintf(debug_file, "%2c", '.');
+    //         fprintf(debug_file, "\n");
+    //     }
+    //     fprintf(debug_file, "\n");
+
+    //     for (i = 0; i < bs->legal_moves_num; i++) {
+    //         fprintf(debug_file, "%d %d\n", I(bs->legal_moves[i]), J(bs->legal_moves[i]));
+    //     }
+
+    //     fclose(debug_file);
+    // }
 
     /* Choose one of the considered moves randomly with uniform
      * distribution. (Strictly speaking the moves with smaller 1D
@@ -222,6 +234,17 @@ int generate_move(board_status *bs, intersection color)
 {
     int pos;
     pos = uct_search(bs, color);
+    // pos = generate_random_move(bs, color);
+
+    // debug_log_board_status(bs);
+    // FILE *debug_file;
+    // debug_file = fopen("debug.log", "a");
+    // int i;
+    // for (i = 1; i <= bs->num_of_strings; i++) {
+    //     fprintf(debug_file, "%i %i\n", i, bs->approximate_liberty[i]);
+    // }
+    // fclose(debug_file);
+
     return pos;
 }
 

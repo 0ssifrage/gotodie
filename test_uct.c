@@ -9,19 +9,17 @@
 int main() {
     board_status b;
     int pos;
-    // int i, res = 0;
-    // double score;
+    int i, res = 0;
+    double score;
 
-    // for (i = 1; i <= 10000; i++) {
-    //     srand((int)time(0) + i);
-    //     clear_board(&b);
-    //     score = simulate_game(&b, BLACK);
-    //     // printf("%f\n", score);
-    //     res += (score > 0);
-    // }
-    // printf("%d\n", res);
-    clear_board(&b);
-    pos = uct_search(&b, BLACK);
-    printf("%d\n", pos);
+    for (i = 1; i <= 1; i++) {
+        srand((int)time(0) + i);
+        clear_board(&b);
+        score = simulate_game(&b, BLACK);
+        // printf("%f\n", score);
+        res += (score > 0);
+    }
+    printf("%d\n", res);
+
     return 0;
 }
